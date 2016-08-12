@@ -2,23 +2,21 @@
 var React = require('react')
 var helpers = require('../utils/helpers')
 var Results = require('./Results')
-
 // This is the form component. 
 var Search = React.createClass({
 
 	// Here we set a generic state associated with the text being searched for
-	getInitialState: function(){
+	getInitialState: function() {
 		return {
 			term: "",
 			start: "",
 			end: "",
 			"articles": [],
-			"arr": [1,2,3,4]
 		}
 	},
 
 	// This function will respond to the user input 
-	handleChange: function(event){
+	handleChange: function(event) {
     	// Here we create syntax to capture any change in text to the query terms (pre-search).
     	// See this Stack Overflow answer for more details: 
     	// http://stackoverflow.com/questions/21029999/react-js-identifying-different-inputs-with-one-onchange-handler
@@ -29,37 +27,39 @@ var Search = React.createClass({
 
 	},
 
-	// When a user searches 
+	// When a user clicks the search button, execute this function
 	handleClick: function(e) {
+		// prevent default
 		e.preventDefault()
-		var arr = []
+
+		// pass the search parameters to the Main.js (parent) file 
+		// to search for the data from the nytimes api
+		this.props.setSearch(this.state.term)
+		this.props.setStart(this.state.start)
+		this.props.setEnd(this.state.end)
+
 		//execute the function that searches nytimes
 		helpers.runQuery(this.state.term, this.state.start, this.state.end)
 			.then(function(data) {
-				//results from the nytimes api search
-				// console.log(data)
-				this.state.articles.push(data)
-				// this.setState({"new": data})
-				console.log(this.state.articles[0])
-
+				//data is the results from the nytimes api search
+				
 				// Send a POST request to save the data from the nytimes api search
 				$.ajax({
 					method: 'post',
 					url: '/saveArticles',
 					data: {"articles": data},
 				}).done(function(data) {
-					
-					data.forEach(function(value,index) {
-						
-					})
+					console.log(data)
+					var updatedArticles = this.state.articles.concat(data);
+					this.setState({articles: updatedArticles});
+					console.log(this.state)
+					// data.forEach(function(value,index) {
 
-				})
+					// })
+
+				}.bind(this))
 
 			}.bind(this))
-		// Set the parent to have the search term
-		// this.props.setTerm(this.state.term);
-
-		
 
 	},
 
@@ -97,7 +97,7 @@ var Search = React.createClass({
 				</div>
 			</div>
 		
-			{this.state.articles}
+						<Results results={this.state.articles}/>
 			
 			</div>
 

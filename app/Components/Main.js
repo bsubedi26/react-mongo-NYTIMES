@@ -13,43 +13,81 @@ var helpers = require('./utils/helpers.js');
 var Main = React.createClass({
 
 	// Here we set a generic state associated with the number of clicks
-	getInitialState: function(){
+	getInitialState: function() {
 		return {
 			search: "",
-			fiveArticles: [],
-			results: "",
-			history: [] /*Note how we added in this history state variable*/
+			start: "",
+			end: "",
+			fiveArticles: []
 		}
 	},	
 
 	// This function allows childrens to update the parent.
-	setArticles: function(term){
+	setSearch: function(search) {
 		this.setState({
-			search: term
+			search: search
 		})
 	},
+	setStart: function(start) {
+		this.setState({
+			start: start
+		})
+	},
+	setEnd: function(end) {
+		this.setState({
+			end: end
+		})
+	},
+	updateArticles: function() {
 
-	getArticles: function() {
-		helpers.getArticles()
-				.then(function(response) {
-					console.log(response.data)
-					this.state.fiveArticles.push(response.data)
-					console.log(this.state.fiveArticles[0])
-
-					// this.state.articles.push(response.data)
-					// this.state.articles.push(data)
-				}.bind(this))
 	},
 
+	componentWillMount: function() {
+	
+	},
+	
 	// If the component changes (i.e. if a search is entered)... 
-	componentDidUpdate: function(prevProps, prevState){
+	componentDidUpdate: function(prevProps, prevState) {
+		// //execute the function that searches nytimes
+		// helpers.runQuery(this.state.search, this.state.start, this.state.end)
+		// 	.then(function(data) {
+		// 		//data is the results from the nytimes api search
+				
+		// 		// Send a POST request to save the data from the nytimes api search
+		// 		$.ajax({
+		// 			method: 'post',
+		// 			url: '/saveArticles',
+		// 			data: {"articles": data},
+		// 		}).done(function(data) {
+		// 			console.log(data)
+		// 			console.log(data)
+		// 			var updatedArticles = this.state.fiveArticles.concat(data);
+		// 			this.setState({fiveArticles: updatedArticles});
 
+		// 			console.log(this.state)
+		// 			// data.forEach(function(value,index) {
+
+		// 			// })
+
+		// 		}.bind(this))
+
+		// 	}.bind(this))
 	},
 
 	// The moment the page renders get the History
 	componentDidMount: function() {
 
-		this.getArticles()
+		// helpers.getArticles()
+		// 		.then(function(response) {
+		// 			// console.log(response.data)
+		// 			// this.state.fiveArticles.push(response.data)
+		// 			// this.setState({fiveArticles: response.data})
+		// 			var newArray = this.state.fiveArticles.slice();
+		// 			 newArray.push(response.data);
+		// 			 this.setState(newArray);
+		// 			console.log(this.state[0])
+
+		// 		}.bind(this))
 
 		console.log('this is the component did mount function (if console logs then it ran)')
 	},
@@ -64,21 +102,14 @@ var Main = React.createClass({
 
 					<div className="col-md-12">
 					
-						<Search setArticles={this.setArticles}/>
+						<Search searchFunction={this.searchFunction} setSearch={this.setSearch} 
+						setStart={this.setStart} setEnd={this.setEnd} articles={this.state.fiveArticles}/>
 
 					</div>
 
-					<div className="col-md-12">
-					
-						<Results results={this.state.fiveArticles}/>
-
-					</div>
-
-					
 
 				</div>
 
-				
 
 			</div>
 		)

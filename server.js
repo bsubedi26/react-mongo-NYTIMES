@@ -58,7 +58,7 @@ app.post('/saveArticles', function(req, res) {
 
   req.body.articles.forEach(function(value,index) {
   // Here we'll save the location based on the JSON input. 
-  db.articles.insert({"title": value.title, "date": value.pub_date, "url": value.url}, function(err,data){
+  db.articles.insert({"title": value.title, "pub_date": value.pub_date, "url": value.url, "date": Date.now()}, function(err,data){
     if(err){
       console.log(err);
     }

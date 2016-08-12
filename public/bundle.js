@@ -19756,37 +19756,74 @@
 		getInitialState: function getInitialState() {
 			return {
 				search: "",
-				fiveArticles: [],
-				results: "",
-				history: [] /*Note how we added in this history state variable*/
+				start: "",
+				end: "",
+				fiveArticles: []
 			};
 		},
 
 		// This function allows childrens to update the parent.
-		setArticles: function setArticles(term) {
+		setSearch: function setSearch(search) {
 			this.setState({
-				search: term
+				search: search
 			});
 		},
-
-		getArticles: function getArticles() {
-			helpers.getArticles().then(function (response) {
-				console.log(response.data);
-				this.state.fiveArticles.push(response.data);
-				console.log(this.state.fiveArticles[0]);
-
-				// this.state.articles.push(response.data)
-				// this.state.articles.push(data)
-			}.bind(this));
+		setStart: function setStart(start) {
+			this.setState({
+				start: start
+			});
 		},
+		setEnd: function setEnd(end) {
+			this.setState({
+				end: end
+			});
+		},
+		updateArticles: function updateArticles() {},
+
+		componentWillMount: function componentWillMount() {},
 
 		// If the component changes (i.e. if a search is entered)... 
-		componentDidUpdate: function componentDidUpdate(prevProps, prevState) {},
+		componentDidUpdate: function componentDidUpdate(prevProps, prevState) {
+			// //execute the function that searches nytimes
+			// helpers.runQuery(this.state.search, this.state.start, this.state.end)
+			// 	.then(function(data) {
+			// 		//data is the results from the nytimes api search
+
+			// 		// Send a POST request to save the data from the nytimes api search
+			// 		$.ajax({
+			// 			method: 'post',
+			// 			url: '/saveArticles',
+			// 			data: {"articles": data},
+			// 		}).done(function(data) {
+			// 			console.log(data)
+			// 			console.log(data)
+			// 			var updatedArticles = this.state.fiveArticles.concat(data);
+			// 			this.setState({fiveArticles: updatedArticles});
+
+			// 			console.log(this.state)
+			// 			// data.forEach(function(value,index) {
+
+			// 			// })
+
+			// 		}.bind(this))
+
+			// 	}.bind(this))
+		},
 
 		// The moment the page renders get the History
 		componentDidMount: function componentDidMount() {
 
-			this.getArticles();
+			// helpers.getArticles()
+			// 		.then(function(response) {
+			// 			// console.log(response.data)
+			// 			// this.state.fiveArticles.push(response.data)
+			// 			// this.setState({fiveArticles: response.data})
+			// 			var newArray = this.state.fiveArticles.slice();
+			// 			 newArray.push(response.data);
+			// 			 this.setState(newArray);
+			// 			console.log(this.state[0])
+
+			// 		}.bind(this))
 
 			console.log('this is the component did mount function (if console logs then it ran)');
 		},
@@ -19803,12 +19840,8 @@
 					React.createElement(
 						'div',
 						{ className: 'col-md-12' },
-						React.createElement(Search, { setArticles: this.setArticles })
-					),
-					React.createElement(
-						'div',
-						{ className: 'col-md-12' },
-						React.createElement(Results, { results: this.state.fiveArticles })
+						React.createElement(Search, { searchFunction: this.searchFunction, setSearch: this.setSearch,
+							setStart: this.setStart, setEnd: this.setEnd, articles: this.state.fiveArticles })
 					)
 				)
 			);
@@ -19834,7 +19867,6 @@
 	var React = __webpack_require__(1);
 	var helpers = __webpack_require__(162);
 	var Results = __webpack_require__(182);
-
 	// This is the form component. 
 	var Search = React.createClass({
 		displayName: 'Search',
@@ -19846,8 +19878,7 @@
 				term: "",
 				start: "",
 				end: "",
-				"articles": [],
-				"arr": [1, 2, 3, 4]
+				"articles": []
 			};
 		},
 
@@ -19862,17 +19893,20 @@
 			this.setState(newState);
 		},
 
-		// When a user searches 
+		// When a user clicks the search button, execute this function
 		handleClick: function handleClick(e) {
+			// prevent default
 			e.preventDefault();
-			var arr = [];
+
+			// pass the search parameters to the Main.js (parent) file 
+			// to search for the data from the nytimes api
+			this.props.setSearch(this.state.term);
+			this.props.setStart(this.state.start);
+			this.props.setEnd(this.state.end);
+
 			//execute the function that searches nytimes
 			helpers.runQuery(this.state.term, this.state.start, this.state.end).then(function (data) {
-				//results from the nytimes api search
-				// console.log(data)
-				this.state.articles.push(data);
-				// this.setState({"new": data})
-				console.log(this.state.articles[0]);
+				//data is the results from the nytimes api search
 
 				// Send a POST request to save the data from the nytimes api search
 				$.ajax({
@@ -19880,13 +19914,15 @@
 					url: '/saveArticles',
 					data: { "articles": data }
 				}).done(function (data) {
+					console.log(data);
+					var updatedArticles = this.state.articles.concat(data);
+					this.setState({ articles: updatedArticles });
+					console.log(this.state);
+					// data.forEach(function(value,index) {
 
-					data.forEach(function (value, index) {});
-				});
+					// })
+				}.bind(this));
 			}.bind(this));
-			// Set the parent to have the search term
-			// this.props.setTerm(this.state.term);
-
 		},
 
 		// Here we render the function
@@ -19958,7 +19994,7 @@
 						)
 					)
 				),
-				this.state.articles
+				React.createElement(Results, { results: this.state.articles })
 			);
 		}
 	});
@@ -21269,22 +21305,56 @@
 	var Results = React.createClass({
 		displayName: "Results",
 
+		componentDidMount: function componentDidMount() {},
+		show: function show() {
+			console.log(this.props.results);
+		},
+
 		render: function render() {
 			return React.createElement(
 				"div",
 				null,
 				React.createElement(
-					"h1",
-					{ className: "text-center" },
-					"Results Section"
+					"div",
+					{ className: "panel panel-default" },
+					React.createElement(
+						"div",
+						{ className: "panel-heading" },
+						React.createElement(
+							"h3",
+							{ className: "panel-title text-center" },
+							"Results Section: "
+						)
+					),
+					React.createElement(
+						"div",
+						{ className: "panel-body text-center" },
+						this.props.results.map(function (result, i) {
+
+							return React.createElement(
+								"p",
+								{ key: i },
+								React.createElement(
+									"a",
+									{ href: result.url },
+									" ",
+									result.title,
+									" "
+								),
+								React.createElement(
+									"a",
+									{ href: "/save", className: "btn btn-primary" },
+									"Save"
+								)
+							);
+						})
+					)
 				),
 				React.createElement(
-					"h1",
-					{ className: "text-center" },
-					this.props.results
-				),
-				console.log(this.props),
-				console.log(this.props.results)
+					"button",
+					{ onClick: this.show },
+					"BUTTON"
+				)
 			);
 		}
 	});
