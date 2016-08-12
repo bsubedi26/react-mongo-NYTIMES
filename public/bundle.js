@@ -52,7 +52,6 @@
 
 	// Include the Main Component
 	var Main = __webpack_require__(159);
-	var Form = __webpack_require__(160);
 
 	// This code here allows us to render our main component (in this case "Main")
 	ReactDOM.render(React.createElement(Main, null), document.getElementById('app'));
@@ -242,17 +241,45 @@
 	} ())
 	function runTimeout(fun) {
 	    if (cachedSetTimeout === setTimeout) {
+	        //normal enviroments in sane situations
 	        return setTimeout(fun, 0);
-	    } else {
-	        return cachedSetTimeout.call(null, fun, 0);
 	    }
+	    try {
+	        // when when somebody has screwed with setTimeout but no I.E. maddness
+	        return cachedSetTimeout(fun, 0);
+	    } catch(e){
+	        try {
+	            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+	            return cachedSetTimeout.call(null, fun, 0);
+	        } catch(e){
+	            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+	            return cachedSetTimeout.call(this, fun, 0);
+	        }
+	    }
+
+
 	}
 	function runClearTimeout(marker) {
 	    if (cachedClearTimeout === clearTimeout) {
-	        clearTimeout(marker);
-	    } else {
-	        cachedClearTimeout.call(null, marker);
+	        //normal enviroments in sane situations
+	        return clearTimeout(marker);
 	    }
+	    try {
+	        // when when somebody has screwed with setTimeout but no I.E. maddness
+	        return cachedClearTimeout(marker);
+	    } catch (e){
+	        try {
+	            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+	            return cachedClearTimeout.call(null, marker);
+	        } catch (e){
+	            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+	            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+	            return cachedClearTimeout.call(this, marker);
+	        }
+	    }
+
+
+
 	}
 	var queue = [];
 	var draining = false;
@@ -19713,12 +19740,12 @@
 	var React = __webpack_require__(1);
 
 	// Here we include all of the sub-components
-	var Form = __webpack_require__(160);
-	var Results = __webpack_require__(181);
-	var History = __webpack_require__(182);
+	var Saved = __webpack_require__(160);
+	var Search = __webpack_require__(161);
+	var Results = __webpack_require__(182);
 
 	// Helper Function
-	var helpers = __webpack_require__(180);
+	var helpers = __webpack_require__(162);
 
 	// This is the main component. 
 	var Main = React.createClass({
@@ -19728,77 +19755,40 @@
 		// Here we set a generic state associated with the number of clicks
 		getInitialState: function getInitialState() {
 			return {
-				searchTerm: "",
+				search: "",
+				fiveArticles: [],
 				results: "",
 				history: [] /*Note how we added in this history state variable*/
 			};
 		},
 
 		// This function allows childrens to update the parent.
-		setTerm: function setTerm(term) {
+		setArticles: function setArticles(term) {
 			this.setState({
-				searchTerm: term
+				search: term
 			});
 		},
 
-		// If the component changes (i.e. if a search is entered)... 
-		componentDidUpdate: function componentDidUpdate(prevProps, prevState) {
+		getArticles: function getArticles() {
+			helpers.getArticles().then(function (response) {
+				console.log(response.data);
+				this.state.fiveArticles.push(response.data);
+				console.log(this.state.fiveArticles[0]);
 
-			// if(prevState.searchTerm != this.state.searchTerm){
-			// 	console.log("UPDATED");
-			// 	console.log(this.state.searchTerm);
-
-
-			// 	// Run the query for the address
-			// 	helpers.runQuery(this.state.searchTerm)
-			// 		.then(function(data){
-			// 			if (data != this.state.results)
-			// 			{
-			// 				console.log("Address", data);
-
-			// 				this.setState({
-			// 					results: data
-			// 				})
-
-			// 				// After we've received the result... then post the search term to our history. 
-			// 				helpers.postHistory(this.state.searchTerm)
-			// 					.then(function(data){
-			// 						console.log("Updated!");
-
-			// 						// After we've done the post... then get the updated history
-			// 						helpers.getHistory()
-			// 							.then(function(response){
-			// 								console.log("Current History", response.data);
-			// 								if (response != this.state.history){
-			// 									console.log ("History", response.data);
-
-			// 									this.setState({
-			// 										history: response.data
-			// 									})
-			// 								}
-			// 							}.bind(this))	
-			// 					}.bind(this)
-			// 				)
-			// 			}
-			// 		}.bind(this))
-
-			// 	}
+				// this.state.articles.push(response.data)
+				// this.state.articles.push(data)
+			}.bind(this));
 		},
+
+		// If the component changes (i.e. if a search is entered)... 
+		componentDidUpdate: function componentDidUpdate(prevProps, prevState) {},
 
 		// The moment the page renders get the History
 		componentDidMount: function componentDidMount() {
 
-			// Get the latest history.
-			// helpers.getHistory()
-			// 	.then(function(response) {
-			// 		if (response != this.state.history){
-			// 			console.log ("History", response.data);
+			this.getArticles();
 
-			// 			this.setState({
-			// 				history: response.data
-			// 			})
-			// 		}
-			// 	}.bind(this))
+			console.log('this is the component did mount function (if console logs then it ran)');
 		},
 
 		// Here we render the function
@@ -19813,18 +19803,13 @@
 					React.createElement(
 						'div',
 						{ className: 'col-md-12' },
-						React.createElement(Form, { setTerm: this.setTerm })
+						React.createElement(Search, { setArticles: this.setArticles })
 					),
 					React.createElement(
 						'div',
 						{ className: 'col-md-12' },
-						React.createElement(Results, { articles: this.state.results })
+						React.createElement(Results, { results: this.state.fiveArticles })
 					)
-				),
-				React.createElement(
-					'div',
-					{ className: 'row' },
-					React.createElement(History, { history: this.state.history })
 				)
 			);
 		}
@@ -19835,17 +19820,24 @@
 
 /***/ },
 /* 160 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+/***/ },
+/* 161 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 	// Include React 
 	var React = __webpack_require__(1);
-	var helpers = __webpack_require__(180);
+	var helpers = __webpack_require__(162);
+	var Results = __webpack_require__(182);
 
 	// This is the form component. 
-	var Form = React.createClass({
-		displayName: 'Form',
+	var Search = React.createClass({
+		displayName: 'Search',
 
 
 		// Here we set a generic state associated with the text being searched for
@@ -19854,7 +19846,8 @@
 				term: "",
 				start: "",
 				end: "",
-				"articles": []
+				"articles": [],
+				"arr": [1, 2, 3, 4]
 			};
 		},
 
@@ -19865,37 +19858,32 @@
 			// http://stackoverflow.com/questions/21029999/react-js-identifying-different-inputs-with-one-onchange-handler
 			var newState = {};
 			newState[event.target.id] = event.target.value;
+			console.log(newState);
 			this.setState(newState);
 		},
 
 		// When a user searches 
 		handleClick: function handleClick(e) {
 			e.preventDefault();
-
 			var arr = [];
-
-			//execute the function that searches nytimes based in user input
-			helpers.runQuery(this.state.term, this.state.start, this.state.end).then(function (response) {
+			//execute the function that searches nytimes
+			helpers.runQuery(this.state.term, this.state.start, this.state.end).then(function (data) {
 				//results from the nytimes api search
-				var data = response.data.response;
-				data.docs.forEach(function (value, index) {
-					arr.push({ "snippet": value.snippet, "url": value.web_url });
-				});
+				// console.log(data)
+				this.state.articles.push(data);
+				// this.setState({"new": data})
+				console.log(this.state.articles[0]);
+
 				// Send a POST request to save the data from the nytimes api search
 				$.ajax({
 					method: 'post',
 					url: '/saveArticles',
-					data: { "articles": arr }
+					data: { "articles": data }
 				}).done(function (data) {
-					console.log(data);
-					// this.setState({ articles: data });
-					data.forEach(function (value, index) {
-						// var articles = this.state.articles
-						// articles.push(value.snippet)
 
-					});
+					data.forEach(function (value, index) {});
 				});
-			});
+			}.bind(this));
 			// Set the parent to have the search term
 			// this.props.setTerm(this.state.term);
 
@@ -19906,78 +19894,77 @@
 
 			return React.createElement(
 				'div',
-				{ className: 'panel panel-default' },
+				{ className: 'all' },
 				React.createElement(
 					'div',
-					{ className: 'panel-heading' },
+					{ className: 'panel panel-default' },
 					React.createElement(
-						'h3',
-						{ className: 'panel-title text-center' },
-						'NY TIMES SEARCH: '
-					)
-				),
-				React.createElement(
-					'div',
-					{ className: 'panel-body text-center' },
-					React.createElement(
-						'form',
-						null,
+						'div',
+						{ className: 'panel-heading' },
 						React.createElement(
-							'div',
-							{ className: 'form-group' },
+							'h3',
+							{ className: 'panel-title text-center' },
+							'NY TIMES SEARCH: '
+						)
+					),
+					React.createElement(
+						'div',
+						{ className: 'panel-body text-center' },
+						React.createElement(
+							'form',
+							null,
 							React.createElement(
-								'h4',
-								{ className: '' },
+								'div',
+								{ className: 'form-group' },
 								React.createElement(
-									'strong',
-									null,
-									'Topic'
-								)
-							),
-							React.createElement('input', { type: 'text', className: 'form-control text-center', id: 'term', onChange: this.handleChange, required: true }),
-							React.createElement('br', null),
-							React.createElement(
-								'h4',
-								{ className: '' },
+									'h4',
+									{ className: '' },
+									React.createElement(
+										'strong',
+										null,
+										'Topic'
+									)
+								),
+								React.createElement('input', { type: 'text', className: 'form-control text-center', id: 'term', onChange: this.handleChange, required: true }),
+								React.createElement('br', null),
 								React.createElement(
-									'strong',
-									null,
-									'Start Year'
-								)
-							),
-							React.createElement('input', { type: 'text', className: 'form-control text-center', id: 'start', onChange: this.handleChange, required: true }),
-							React.createElement('br', null),
-							React.createElement(
-								'h4',
-								{ className: '' },
+									'h4',
+									{ className: '' },
+									React.createElement(
+										'strong',
+										null,
+										'Start Year'
+									)
+								),
+								React.createElement('input', { type: 'text', className: 'form-control text-center', id: 'start', onChange: this.handleChange, required: true }),
+								React.createElement('br', null),
 								React.createElement(
-									'strong',
-									null,
-									'End Year'
+									'h4',
+									{ className: '' },
+									React.createElement(
+										'strong',
+										null,
+										'End Year'
+									)
+								),
+								React.createElement('input', { type: 'text', className: 'form-control text-center', id: 'end', onChange: this.handleChange, required: true }),
+								React.createElement('br', null),
+								React.createElement(
+									'button',
+									{ type: 'button', className: 'btn btn-primary', onClick: this.handleClick },
+									'Search'
 								)
-							),
-							React.createElement('input', { type: 'text', className: 'form-control text-center', id: 'end', onChange: this.handleChange, required: true }),
-							React.createElement('br', null),
-							React.createElement(
-								'button',
-								{ type: 'button', className: 'btn btn-primary', onClick: this.handleClick },
-								'Search'
 							)
 						)
 					)
-				)
+				),
+				this.state.articles
 			);
 		}
 	});
 
 	// Export the component back for use in other files
-	module.exports = Form;
-
-/***/ },
-/* 161 */
-/***/ function(module, exports, __webpack_require__) {
-
-	module.exports = __webpack_require__(162);
+	module.exports = Search;
 
 /***/ },
 /* 162 */
@@ -19985,14 +19972,100 @@
 
 	'use strict';
 
-	var defaults = __webpack_require__(163);
-	var utils = __webpack_require__(164);
-	var dispatchRequest = __webpack_require__(166);
-	var InterceptorManager = __webpack_require__(175);
-	var isAbsoluteURL = __webpack_require__(176);
-	var combineURLs = __webpack_require__(177);
-	var bind = __webpack_require__(178);
-	var transformData = __webpack_require__(170);
+	// Include the axios package for performing HTTP requests (promise based alternative to request)
+	var axios = __webpack_require__(163);
+
+	// NY TIMES API
+	// var nytAPI = 'c93c620e2666430ab20bf934eca8d8d6';
+	var nytAPI = '75b34d15b9a448418433f388c8c85020';
+
+	// Helper Functions
+	var helpers = {
+
+		runQuery: function runQuery(term, start, end) {
+
+			// build the query url for the new york times api
+			var queryURL = "https://api.nytimes.com/svc/search/v2/articlesearch.json?api-key=" + nytAPI + "&q=";
+			queryURL += term;
+			queryURL += "&begin_date=" + start + "0101";
+			queryURL += "&end_date=" + end + "0101";
+
+			return axios.get(queryURL).then(function (nytimes_data) {
+
+				// store the articles returned in a variable
+				var articles = nytimes_data.data.response.docs;
+
+				// map through the array and build an object for each article
+				var articles_obj_array = articles.map(function (article, index) {
+					var articlesObj = {
+						title: article.headline.main,
+						pub_date: article.pub_date,
+						url: article.web_url
+					};
+					return articlesObj;
+				});
+
+				// return the object, which can be accessed using .then
+				return articles_obj_array;
+			});
+		},
+
+		getArticles: function getArticles() {
+
+			// using axios to access the get route defined in server.js and will return all the articles in our db
+			return axios.get('/api').then(function (response) {
+
+				// return response so we can access it in the Main component
+				return response;
+			});
+		},
+
+		// This function hits our own server to retrieve the record of query results
+		getHistory: function getHistory() {
+
+			return axios.get('/api/').then(function (response) {
+
+				// console.log(response);
+
+				return response;
+			});
+		},
+
+		// This function posts new searches to our database.
+		postHistory: function postHistory(location) {
+
+			return axios.post('/api/', { location: location }).then(function (results) {
+
+				console.log("Posted to MongoDB");
+				return results;
+			});
+		}
+
+	};
+
+	// We export the helpers function 
+	module.exports = helpers;
+
+/***/ },
+/* 163 */
+/***/ function(module, exports, __webpack_require__) {
+
+	module.exports = __webpack_require__(164);
+
+/***/ },
+/* 164 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var defaults = __webpack_require__(165);
+	var utils = __webpack_require__(166);
+	var dispatchRequest = __webpack_require__(168);
+	var InterceptorManager = __webpack_require__(177);
+	var isAbsoluteURL = __webpack_require__(178);
+	var combineURLs = __webpack_require__(179);
+	var bind = __webpack_require__(180);
+	var transformData = __webpack_require__(172);
 
 	function Axios(defaultConfig) {
 	  this.defaults = utils.merge({}, defaultConfig);
@@ -20081,7 +20154,7 @@
 	axios.all = function all(promises) {
 	  return Promise.all(promises);
 	};
-	axios.spread = __webpack_require__(179);
+	axios.spread = __webpack_require__(181);
 
 	// Provide aliases for supported request methods
 	utils.forEach(['delete', 'get', 'head'], function forEachMethodNoData(method) {
@@ -20109,13 +20182,13 @@
 
 
 /***/ },
-/* 163 */
+/* 165 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(164);
-	var normalizeHeaderName = __webpack_require__(165);
+	var utils = __webpack_require__(166);
+	var normalizeHeaderName = __webpack_require__(167);
 
 	var PROTECTION_PREFIX = /^\)\]\}',?\n/;
 	var DEFAULT_CONTENT_TYPE = {
@@ -20187,7 +20260,7 @@
 
 
 /***/ },
-/* 164 */
+/* 166 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -20470,12 +20543,12 @@
 
 
 /***/ },
-/* 165 */
+/* 167 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(164);
+	var utils = __webpack_require__(166);
 
 	module.exports = function normalizeHeaderName(headers, normalizedName) {
 	  utils.forEach(headers, function processHeader(value, name) {
@@ -20488,7 +20561,7 @@
 
 
 /***/ },
-/* 166 */
+/* 168 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {'use strict';
@@ -20510,10 +20583,10 @@
 	        adapter = config.adapter;
 	      } else if (typeof XMLHttpRequest !== 'undefined') {
 	        // For browsers use XHR adapter
-	        adapter = __webpack_require__(167);
+	        adapter = __webpack_require__(169);
 	      } else if (typeof process !== 'undefined') {
 	        // For node use HTTP adapter
-	        adapter = __webpack_require__(167);
+	        adapter = __webpack_require__(169);
 	      }
 
 	      if (typeof adapter === 'function') {
@@ -20529,18 +20602,18 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ },
-/* 167 */
+/* 169 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {'use strict';
 
-	var utils = __webpack_require__(164);
-	var buildURL = __webpack_require__(168);
-	var parseHeaders = __webpack_require__(169);
-	var transformData = __webpack_require__(170);
-	var isURLSameOrigin = __webpack_require__(171);
-	var btoa = (typeof window !== 'undefined' && window.btoa) || __webpack_require__(172);
-	var settle = __webpack_require__(173);
+	var utils = __webpack_require__(166);
+	var buildURL = __webpack_require__(170);
+	var parseHeaders = __webpack_require__(171);
+	var transformData = __webpack_require__(172);
+	var isURLSameOrigin = __webpack_require__(173);
+	var btoa = (typeof window !== 'undefined' && window.btoa) || __webpack_require__(174);
+	var settle = __webpack_require__(175);
 
 	module.exports = function xhrAdapter(resolve, reject, config) {
 	  var requestData = config.data;
@@ -20637,7 +20710,7 @@
 	  // This is only done if running in a standard browser environment.
 	  // Specifically not if we're in a web worker, or react-native.
 	  if (utils.isStandardBrowserEnv()) {
-	    var cookies = __webpack_require__(174);
+	    var cookies = __webpack_require__(176);
 
 	    // Add xsrf header
 	    var xsrfValue = config.withCredentials || isURLSameOrigin(config.url) ?
@@ -20698,12 +20771,12 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ },
-/* 168 */
+/* 170 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(164);
+	var utils = __webpack_require__(166);
 
 	function encode(val) {
 	  return encodeURIComponent(val).
@@ -20772,12 +20845,12 @@
 
 
 /***/ },
-/* 169 */
+/* 171 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(164);
+	var utils = __webpack_require__(166);
 
 	/**
 	 * Parse headers into an object
@@ -20815,12 +20888,12 @@
 
 
 /***/ },
-/* 170 */
+/* 172 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(164);
+	var utils = __webpack_require__(166);
 
 	/**
 	 * Transform the data for a request or a response
@@ -20841,12 +20914,12 @@
 
 
 /***/ },
-/* 171 */
+/* 173 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(164);
+	var utils = __webpack_require__(166);
 
 	module.exports = (
 	  utils.isStandardBrowserEnv() ?
@@ -20915,7 +20988,7 @@
 
 
 /***/ },
-/* 172 */
+/* 174 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -20957,7 +21030,7 @@
 
 
 /***/ },
-/* 173 */
+/* 175 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -20981,12 +21054,12 @@
 
 
 /***/ },
-/* 174 */
+/* 176 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(164);
+	var utils = __webpack_require__(166);
 
 	module.exports = (
 	  utils.isStandardBrowserEnv() ?
@@ -21040,12 +21113,12 @@
 
 
 /***/ },
-/* 175 */
+/* 177 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(164);
+	var utils = __webpack_require__(166);
 
 	function InterceptorManager() {
 	  this.handlers = [];
@@ -21098,7 +21171,7 @@
 
 
 /***/ },
-/* 176 */
+/* 178 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -21118,7 +21191,7 @@
 
 
 /***/ },
-/* 177 */
+/* 179 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -21136,7 +21209,7 @@
 
 
 /***/ },
-/* 178 */
+/* 180 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -21153,7 +21226,7 @@
 
 
 /***/ },
-/* 179 */
+/* 181 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -21186,156 +21259,37 @@
 
 
 /***/ },
-/* 180 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	// Include the axios package for performing HTTP requests (promise based alternative to request)
-	var axios = __webpack_require__(161);
-
-	// NY TIMES API
-	var nytAPI = 'c93c620e2666430ab20bf934eca8d8d6';
-	// var nytAPI = '75b34d15b9a448418433f388c8c85020';
-
-
-	// Helper Functions
-	var helpers = {
-
-		runQuery: function runQuery(term, start, end) {
-
-			// build the query url for the new york times api
-			var queryURL = "https://api.nytimes.com/svc/search/v2/articlesearch.json?api-key=" + nytAPI + "&q=";
-			queryURL += term;
-			queryURL += "&begin_date=" + start + "0101";
-			queryURL += "&end_date=" + end + "0101";
-
-			return axios.get(queryURL);
-			// 	.then(function(response){
-
-			// 		// console.log(response.data.response.docs);
-
-			// })
-		},
-
-		// This function hits our own server to retrieve the record of query results
-		getHistory: function getHistory() {
-
-			return axios.get('/api/').then(function (response) {
-
-				// console.log(response);
-
-				return response;
-			});
-		},
-
-		// This function posts new searches to our database.
-		postHistory: function postHistory(location) {
-
-			return axios.post('/api/', { location: location }).then(function (results) {
-
-				console.log("Posted to MongoDB");
-				return results;
-			});
-		}
-
-	};
-
-	// We export the helpers function 
-	module.exports = helpers;
-
-/***/ },
-/* 181 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";
-
-	// Include React 
-	var React = __webpack_require__(1);
-
-	// This is the results component
-	var Results = React.createClass({
-		displayName: "Results",
-
-
-		// Here we render the function
-		render: function render() {
-
-			return React.createElement(
-				"div",
-				{ className: "panel panel-default" },
-				React.createElement(
-					"div",
-					{ className: "panel-heading" },
-					React.createElement(
-						"h3",
-						{ className: "panel-title text-center" },
-						"Results"
-					)
-				),
-				React.createElement(
-					"div",
-					{ className: "panel-body text-center" },
-					React.createElement(
-						"p",
-						null,
-						this.props.articles
-					)
-				)
-			);
-		}
-	});
-
-	// Export the component back for use in other files
-	module.exports = Results;
-
-/***/ },
 /* 182 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
-	// Include React 
 	var React = __webpack_require__(1);
 
-	// This is the history component. It will be used to show a log of  recent searches.
-	var History = React.createClass({
-		displayName: "History",
+	var Results = React.createClass({
+		displayName: "Results",
 
-		// Here we render the function
 		render: function render() {
-
 			return React.createElement(
 				"div",
-				{ className: "panel panel-default" },
+				null,
 				React.createElement(
-					"div",
-					{ className: "panel-heading" },
-					React.createElement(
-						"h3",
-						{ className: "panel-title text-center" },
-						"Search History"
-					)
+					"h1",
+					{ className: "text-center" },
+					"Results Section"
 				),
 				React.createElement(
-					"div",
-					{ className: "panel-body text-center" },
-					this.props.history.map(function (search, i) {
-						return React.createElement(
-							"p",
-							{ key: i },
-							search.location,
-							" - ",
-							search.date
-						);
-					})
-				)
+					"h1",
+					{ className: "text-center" },
+					this.props.results
+				),
+				console.log(this.props),
+				console.log(this.props.results)
 			);
 		}
 	});
 
-	// Export the component back for use in other files
-	module.exports = History;
+	module.exports = Results;
 
 /***/ }
 /******/ ]);

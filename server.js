@@ -41,24 +41,24 @@ app.get('/', function(req, res){
 app.get('/api/', function(req, res) {
 
   // We will find all the records, sort it in descending order, then limit the records to 5
-  // db.address.find({}).sort({'date': 1}).limit(5, function(err, doc){
+    db.articles.find({}).sort({'date': 1}).limit(5, function(err, doc){
 
-  //     if(err){
-  //       console.log(err);
-  //     }
-  //     else {
-  //       res.send(doc);
-  //     }
-  //   })
+        if(err){
+          console.log(err);
+        }
+        else {
+          res.json(doc);
+        }
+      })
 });
 
 // This is the route we will send POST requests to save each search.
 app.post('/saveArticles', function(req, res) {
-  console.log(req.body.articles);
+  console.log(req.body);
 
   req.body.articles.forEach(function(value,index) {
   // Here we'll save the location based on the JSON input. 
-  db.articles.insert({"snippet": value.snippet, "url": value.url, "date": Date.now()}, function(err,data){
+  db.articles.insert({"title": value.title, "date": value.pub_date, "url": value.url}, function(err,data){
     if(err){
       console.log(err);
     }
