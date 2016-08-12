@@ -33,7 +33,6 @@ var Search = React.createClass({
 		e.preventDefault()
 
 		// pass the search parameters to the Main.js (parent) file 
-		// to search for the data from the nytimes api
 		this.props.setSearch(this.state.term)
 		this.props.setStart(this.state.start)
 		this.props.setEnd(this.state.end)
@@ -42,7 +41,6 @@ var Search = React.createClass({
 		helpers.runQuery(this.state.term, this.state.start, this.state.end)
 			.then(function(data) {
 				//data is the results from the nytimes api search
-				
 				// Send a POST request to save the data from the nytimes api search
 				$.ajax({
 					method: 'post',
@@ -50,12 +48,13 @@ var Search = React.createClass({
 					data: {"articles": data},
 				}).done(function(data) {
 					console.log(data)
+					// Remove the previous articles in the state articles array
+					this.state.articles = [];
+					// Update the state articles with the new results returned from server side
 					var updatedArticles = this.state.articles.concat(data);
+					// Set the new results to the articles state array
 					this.setState({articles: updatedArticles});
 					console.log(this.state)
-					// data.forEach(function(value,index) {
-
-					// })
 
 				}.bind(this))
 
@@ -70,7 +69,7 @@ var Search = React.createClass({
 			<div className="all">
 			<div className="panel panel-default">
 				<div className="panel-heading">
-				<h3 className="panel-title text-center">NY TIMES SEARCH: </h3>
+				<h1 className="panel-title text-center"><strong>New York Times Search: </strong></h1>
 				</div>
 				<div className="panel-body text-center">
 					<form>

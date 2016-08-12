@@ -19899,7 +19899,6 @@
 			e.preventDefault();
 
 			// pass the search parameters to the Main.js (parent) file 
-			// to search for the data from the nytimes api
 			this.props.setSearch(this.state.term);
 			this.props.setStart(this.state.start);
 			this.props.setEnd(this.state.end);
@@ -19907,7 +19906,6 @@
 			//execute the function that searches nytimes
 			helpers.runQuery(this.state.term, this.state.start, this.state.end).then(function (data) {
 				//data is the results from the nytimes api search
-
 				// Send a POST request to save the data from the nytimes api search
 				$.ajax({
 					method: 'post',
@@ -19915,12 +19913,13 @@
 					data: { "articles": data }
 				}).done(function (data) {
 					console.log(data);
+					// Remove the previous articles in the state articles array
+					this.state.articles = [];
+					// Update the state articles with the new results returned from server side
 					var updatedArticles = this.state.articles.concat(data);
+					// Set the new results to the articles state array
 					this.setState({ articles: updatedArticles });
 					console.log(this.state);
-					// data.forEach(function(value,index) {
-
-					// })
 				}.bind(this));
 			}.bind(this));
 		},
@@ -19938,9 +19937,13 @@
 						'div',
 						{ className: 'panel-heading' },
 						React.createElement(
-							'h3',
+							'h1',
 							{ className: 'panel-title text-center' },
-							'NY TIMES SEARCH: '
+							React.createElement(
+								'strong',
+								null,
+								'New York Times Search: '
+							)
 						)
 					),
 					React.createElement(
@@ -21305,9 +21308,19 @@
 	var Results = React.createClass({
 		displayName: "Results",
 
-		componentDidMount: function componentDidMount() {},
-		show: function show() {
-			console.log(this.props.results);
+		getInitialState: function getInitialState() {
+			return {
+				"saveTitle": ""
+			};
+		},
+		componentDidMount: function componentDidMount() {
+
+			$('body').on("click", "#save", function (e) {
+
+				var title = $(this).prev().text();
+				console.log(title);
+				// this.setState({"saveTitle": title})
+			});
 		},
 
 		render: function render() {
@@ -21321,9 +21334,13 @@
 						"div",
 						{ className: "panel-heading" },
 						React.createElement(
-							"h3",
+							"h1",
 							{ className: "panel-title text-center" },
-							"Results Section: "
+							React.createElement(
+								"strong",
+								null,
+								"Results Section: "
+							)
 						)
 					),
 					React.createElement(
@@ -21332,7 +21349,7 @@
 						this.props.results.map(function (result, i) {
 
 							return React.createElement(
-								"p",
+								"div",
 								{ key: i },
 								React.createElement(
 									"a",
@@ -21342,18 +21359,15 @@
 									" "
 								),
 								React.createElement(
-									"a",
-									{ href: "/save", className: "btn btn-primary" },
+									"button",
+									{ type: "button", className: "btn btn-primary", id: "save" },
 									"Save"
-								)
+								),
+								React.createElement("hr", null),
+								React.createElement("hr", null)
 							);
 						})
 					)
-				),
-				React.createElement(
-					"button",
-					{ onClick: this.show },
-					"BUTTON"
 				)
 			);
 		}

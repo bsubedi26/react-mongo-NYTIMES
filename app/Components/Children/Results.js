@@ -2,13 +2,20 @@ var React = require('react')
 
 
 var Results = React.createClass({
+	getInitialState: function() {
+		return {
+			"saveTitle": ""
+		}
+	},
 	componentDidMount: function() {
 
-		
+		$('body').on("click", "#save", function(e) {
 
-	},
-	show: function() {
-			console.log(this.props.results)
+
+		var title = $(this).prev().text()
+		console.log(title)
+		// this.setState({"saveTitle": title})
+		})
 
 	},
 
@@ -18,20 +25,19 @@ var Results = React.createClass({
 
 				<div className="panel panel-default">
 					<div className="panel-heading">
-					<h3 className="panel-title text-center">Results Section: </h3>
+					<h1 className="panel-title text-center"><strong>Results Section: </strong></h1>
 					</div>
 					<div className="panel-body text-center">
 						{this.props.results.map(function(result,i) {
 
-											return <p key={i}><a href={result.url}> {result.title} </a> 
-											<a href="/save" className="btn btn-primary">Save</a></p>
-
+						return <div key={i}><a href={result.url}> {result.title} </a>
+								<button type="button" className="btn btn-primary" id="save">Save</button>
+								<hr />
+								<hr />
+								</div>
 						})}
 					</div>
 				</div>
-				
-				<button onClick={this.show}>BUTTON</button>
-				
 
 			</div>
 			)
